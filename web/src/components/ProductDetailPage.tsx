@@ -1,16 +1,33 @@
-import React, { useState } from 'react';
-import { Box, Heading, Text, Button, Grid, Image as GrommetImage } from 'grommet';
-import { DocumentText, AddCircle, Document } from 'grommet-icons';
+import React, { useState } from 'react'
+
+import {
+  Box,
+  Heading,
+  Text,
+  Button,
+  Grid,
+  Image as GrommetImage,
+} from 'grommet'
+import { DocumentText, AddCircle, Document } from 'grommet-icons'
 
 const albumSizes = [
   { label: '20cm × 15cm', width: 20, height: 15 },
   { label: '27cm × 21cm', width: 27, height: 21 },
   { label: '35cm × 26cm', width: 35, height: 26 },
-];
+]
 
-export default function ProductDetailPage({ onContinue }) {
-  const [selected, setSelected] = useState(null);
+interface ProductDetailPageProps {
+  onContinue: (size: { label: string; width: number; height: number }) => void
+}
 
+export default function ProductDetailPage({
+  onContinue,
+}: ProductDetailPageProps) {
+  const [selected, setSelected] = useState<{
+    label: string
+    width: number
+    height: number
+  } | null>(null)
 
   return (
     <Box direction="row" pad="medium" gap="large" align="start">
@@ -59,21 +76,23 @@ export default function ProductDetailPage({ onContinue }) {
             />
           </Box>
         </Grid>
-        
-        
       </Box>
-     
-      <Box width="medium" gap="small" >
+
+      <Box width="medium" gap="small">
         <Heading level={2} margin="none">
           Soft cover Album
         </Heading>
-        <Text weight="bold" size="large">10 EUR</Text>
+        <Text weight="bold" size="large">
+          10 EUR
+        </Text>
         <Box direction="row" gap="small" wrap>
           {albumSizes.map((size) => (
             <Box
               key={size.label}
               pad="small"
-              border={{ color: selected?.label === size.label ? 'brand' : 'border' }}
+              border={{
+                color: selected?.label === size.label ? 'brand' : 'border',
+              }}
               round="xsmall"
               onClick={() => setSelected(size)}
               style={{ cursor: 'pointer' }}
@@ -83,7 +102,6 @@ export default function ProductDetailPage({ onContinue }) {
           ))}
         </Box>
         <Box gap="xsmall" margin={{ top: 'medium', bottom: 'medium' }}>
-          
           <Box direction="row" align="center" gap="xsmall">
             <DocumentText />
             <Text>20 pages</Text>
@@ -105,5 +123,5 @@ export default function ProductDetailPage({ onContinue }) {
         />
       </Box>
     </Box>
-  );
+  )
 }

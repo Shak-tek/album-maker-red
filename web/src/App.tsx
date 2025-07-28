@@ -31,7 +31,7 @@ const theme = deepMerge({
   },
 })
 
-const IK_URL_ENDPOINT = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT || ''
+const IK_URL_ENDPOINT = import.meta.env.REACT_APP_IMAGEKIT_URL_ENDPOINT || ''
 const getResizedUrl = (key: string, width = 1000) =>
   `${IK_URL_ENDPOINT}/${encodeURI(key)}?tr=w-${width},fo-face`
 

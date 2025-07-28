@@ -8,9 +8,9 @@ export const handler = async (
   _context: Context
 ) => {
   const imagekit = new ImageKit({
-    publicKey: process.env.IMAGEKIT_PUBLIC_KEY || '',
-    privateKey: process.env.IMAGEKIT_PRIVATE_KEY || '',
-    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || '',
+    publicKey: import.meta.env.IMAGEKIT_PUBLIC_KEY || '',
+    privateKey: import.meta.env.IMAGEKIT_PRIVATE_KEY || '',
+    urlEndpoint: import.meta.env.IMAGEKIT_URL_ENDPOINT || '',
   })
 
   try {
@@ -18,7 +18,7 @@ export const handler = async (
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+        'Access-Control-Allow-Origin': import.meta.env.CORS_ORIGIN || '*',
       },
       body: JSON.stringify(result),
     }
@@ -27,7 +27,7 @@ export const handler = async (
     return {
       statusCode: 500,
       headers: {
-        'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+        'Access-Control-Allow-Origin': import.meta.env.CORS_ORIGIN || '*',
       },
       body: JSON.stringify({ error: err.message }),
     }

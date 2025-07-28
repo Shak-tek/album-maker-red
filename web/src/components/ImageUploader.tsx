@@ -14,7 +14,7 @@ const MAX_IMAGES = 100
 const MIN_IMAGES = 20 // ← minimum required photos
 
 // base ImageKit URL used for thumbnails
-const IK_URL_ENDPOINT = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT || ''
+const IK_URL_ENDPOINT = import.meta.env.REACT_APP_IMAGEKIT_URL_ENDPOINT || ''
 
 // helper to build a resize URL via ImageKit with cache-busting
 const getResizedUrl = (key: string, width = 300) =>

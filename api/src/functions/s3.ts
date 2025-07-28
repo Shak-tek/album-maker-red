@@ -9,8 +9,8 @@ import type { APIGatewayEvent, Context } from 'aws-lambda'
 
 import { logger } from 'src/lib/logger'
 
-const REGION = process.env.AWS_REGION || 'us-east-1'
-const BUCKET = process.env.S3_BUCKET || ''
+const REGION = import.meta.env.AWS_REGION || 'us-east-1'
+const BUCKET = import.meta.env.S3_BUCKET || ''
 
 const client = new S3Client({ region: REGION })
 
@@ -34,7 +34,7 @@ export const handler = async (event: APIGatewayEvent, _context: Context) => {
         return {
           statusCode: 200,
           headers: {
-            'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+            'Access-Control-Allow-Origin': import.meta.env.CORS_ORIGIN || '*',
           },
           body: JSON.stringify({ url }),
         }
@@ -47,7 +47,7 @@ export const handler = async (event: APIGatewayEvent, _context: Context) => {
         return {
           statusCode: 200,
           headers: {
-            'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+            'Access-Control-Allow-Origin': import.meta.env.CORS_ORIGIN || '*',
           },
           body: JSON.stringify({ contents: data.Contents || [] }),
         }
@@ -63,7 +63,7 @@ export const handler = async (event: APIGatewayEvent, _context: Context) => {
         return {
           statusCode: 200,
           headers: {
-            'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+            'Access-Control-Allow-Origin': import.meta.env.CORS_ORIGIN || '*',
           },
           body: JSON.stringify({ success: true }),
         }
@@ -72,7 +72,7 @@ export const handler = async (event: APIGatewayEvent, _context: Context) => {
         return {
           statusCode: 400,
           headers: {
-            'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+            'Access-Control-Allow-Origin': import.meta.env.CORS_ORIGIN || '*',
           },
           body: 'Unknown action',
         }
@@ -82,7 +82,7 @@ export const handler = async (event: APIGatewayEvent, _context: Context) => {
     return {
       statusCode: 500,
       headers: {
-        'Access-Control-Allow-Origin': process.env.CORS_ORIGIN || '*',
+        'Access-Control-Allow-Origin': import.meta.env.CORS_ORIGIN || '*',
       },
       body: JSON.stringify({ error: (err as Error).message }),
     }

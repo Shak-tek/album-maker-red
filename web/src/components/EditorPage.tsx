@@ -10,11 +10,9 @@ import { jsPDF } from 'jspdf'
 
 import { presignUpload } from 'src/lib/s3Client'
 
-import { pageTemplates } from '../templates/pageTemplates'
-
 import SettingsBar from './SettingsBar'
 import TemplateModal from './TemplateModal'
-import ThemeModal from './ThemeModal'
+import { pageTemplates } from './templates/pageTemplates'
 
 interface AlbumSize {
   width: number

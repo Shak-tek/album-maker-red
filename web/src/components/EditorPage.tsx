@@ -2,12 +2,13 @@
 import './EditorPage.css'
 import React, { useState, useEffect, useRef } from 'react'
 
-import type AWS from 'aws-sdk'
 import ColorThief from 'color-thief-browser'
 import { Box, Button, Layer, Text } from 'grommet'
 import { Template as TemplateIcon, Brush } from 'grommet-icons'
 import { toJpeg } from 'html-to-image'
 import { jsPDF } from 'jspdf'
+
+import { presignUpload } from 'src/lib/s3Client'
 
 import { pageTemplates } from '../templates/pageTemplates'
 
@@ -24,7 +25,6 @@ interface EditorPageProps {
   images: string[]
   onAddImages: (urls: string[]) => void
   albumSize: AlbumSize | null
-  s3: AWS.S3
   sessionId: string
 }
 
@@ -121,7 +121,6 @@ export default function EditorPage({
   images,
   onAddImages,
   albumSize,
-  s3,
   sessionId,
 }: EditorPageProps) {
   const [pageSettings, setPageSettings] = useState<PageSetting[]>([])
@@ -418,9 +417,12 @@ export default function EditorPage({
     const blob = pdf.output('blob')
     const key = `${sessionId}/album.pdf`
     try {
-      await s3
-        .upload({ Key: key, Body: blob, ContentType: 'application/pdf' })
-        .promise()
+      const { url } = await presignUpload(key, 'application/pdf')
+      await fetch(url, {
+        method: 'PUT',
+        body: blob,
+        headers: { 'Content-Type': 'application/pdf' },
+      })
     } finally {
       setSaving(false)
     }

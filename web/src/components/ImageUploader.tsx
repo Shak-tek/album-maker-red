@@ -1,14 +1,14 @@
 // src/components/ImageUploader.js
 import React, { useEffect, useState, useRef } from 'react'
 
-import AWS from 'aws-sdk'
 import { Box, Heading, Text } from 'grommet'
+
+import { presignUpload } from 'src/lib/s3Client'
 
 import GridStep from './GridStep'
 import UploadStepContent from './UploadStepContent'
 
 const REGION = 'us-east-1'
-const IDENTITY_POOL_ID = 'us-east-1:77fcf55d-2bdf-4f46-b979-ee71beb59193'
 const BUCKET = 'albumgrom'
 const MAX_IMAGES = 100
 const MIN_IMAGES = 20 // ← minimum required photos
@@ -39,20 +39,7 @@ export default function ImageUploader({
 }: ImageUploaderProps) {
   const [uploads, setUploads] = useState<UploadEntry[]>([])
   const [step, setStep] = useState<number>(1)
-  const [s3Client, setS3Client] = useState<AWS.S3 | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-
-  // Cognito + S3 init
-  useEffect(() => {
-    const creds = new AWS.CognitoIdentityCredentials({
-      IdentityPoolId: IDENTITY_POOL_ID,
-    })
-    AWS.config.update({ region: REGION, credentials: creds })
-    creds.get((err) => {
-      if (!err) setS3Client(new AWS.S3({ apiVersion: '2006-03-01' }))
-      else console.error('Cognito error', err)
-    })
-  }, [])
 
   const updateUpload = (idx: number, fields: Partial<UploadEntry>) =>
     setUploads((all) => {
@@ -84,9 +71,9 @@ export default function ImageUploader({
     setStep(2)
   }
 
-  // perform S3 uploads and overwrite preview with the ImageKit URL on success
+  // perform S3 uploads via presigned URLs and overwrite preview on success
   useEffect(() => {
-    if (step !== 2 || !s3Client) return
+    if (step !== 2) return
 
     uploads.forEach((u, idx) => {
       if (u.status !== 'pending') return
@@ -94,35 +81,37 @@ export default function ImageUploader({
       const key = `${sessionId}/${Date.now()}_${u.file.name}`
       updateUpload(idx, { status: 'uploading', key })
 
-      const managed = s3Client.upload({
-        Bucket: BUCKET,
-        Key: key,
-        Body: u.file,
-        ContentType: u.file.type,
-      })
-
-      managed.on('httpUploadProgress', (evt) => {
-        updateUpload(idx, {
-          progress: Math.round((evt.loaded / evt.total) * 100),
+      presignUpload(key, u.file.type)
+        .then(({ url }) => {
+          const xhr = new XMLHttpRequest()
+          xhr.upload.onprogress = (evt) => {
+            if (evt.lengthComputable) {
+              updateUpload(idx, {
+                progress: Math.round((evt.loaded / evt.total) * 100),
+              })
+            }
+          }
+          xhr.onerror = () => updateUpload(idx, { status: 'error' })
+          xhr.onload = () => {
+            if (xhr.status < 300) {
+              const resized = getResizedUrl(key, 300)
+              updateUpload(idx, {
+                status: 'uploaded',
+                uploadUrl: `https://${BUCKET}.s3.${REGION}.amazonaws.com/${key}`,
+                preview: resized,
+                progress: 100,
+              })
+            } else {
+              updateUpload(idx, { status: 'error' })
+            }
+          }
+          xhr.open('PUT', url)
+          xhr.setRequestHeader('Content-Type', u.file.type)
+          xhr.send(u.file)
         })
-      })
-
-      managed.send((err, data) => {
-        if (err) {
-          updateUpload(idx, { status: 'error' })
-        } else {
-          const resized = getResizedUrl(key, 300)
-
-          updateUpload(idx, {
-            status: 'uploaded',
-            uploadUrl: data.Location,
-            preview: resized,
-            progress: 100,
-          })
-        }
-      })
+        .catch(() => updateUpload(idx, { status: 'error' }))
     })
-  }, [step, uploads, s3Client, sessionId])
+  }, [step, uploads, sessionId])
 
   // counts & ready-flags
   const photosUploaded = uploads.filter((u) => u.status === 'uploaded').length

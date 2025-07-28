@@ -13,7 +13,7 @@ const viteConfig: UserConfig = {
   plugins: [redwood()],
   build: {
     rollupOptions: {
-      external: ['color-thief-browser'],
+      external: ['color-thief-browser', 'styled-components'],
     },
   },
 }

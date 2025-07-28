@@ -11,6 +11,11 @@ dns.setDefaultResultOrder('verbatim')
 
 const viteConfig: UserConfig = {
   plugins: [redwood()],
+  build: {
+    rollupOptions: {
+      external: ['color-thief-browser'],
+    },
+  },
 }
 
 export default defineConfig(viteConfig)

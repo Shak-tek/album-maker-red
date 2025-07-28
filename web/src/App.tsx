@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 
-import AWS from 'aws-sdk'
 import {
   Grommet,
   Header,
@@ -20,6 +19,7 @@ import EditorPage from 'src/components/EditorPage'
 import ImageUploader from 'src/components/ImageUploader'
 import ProductDetailPage from 'src/components/ProductDetailPage'
 import TitlePage from 'src/components/TitlePage'
+import { listObjects, deleteObjects } from 'src/lib/s3Client'
 import FatalErrorPage from 'src/pages/FatalErrorPage'
 import LoginPage from 'src/pages/LoginPage/LoginPage'
 import ProfilePage from 'src/pages/ProfilePage/ProfilePage'
@@ -29,19 +29,6 @@ const theme = deepMerge({
     colors: { brand: '#228BE6' },
     font: { family: 'Roboto', size: '18px', height: '20px' },
   },
-})
-
-const REGION = 'us-east-1'
-const IDENTITY_POOL_ID = 'us-east-1:77fcf55d-2bdf-4f46-b979-ee71beb59193'
-const BUCKET = 'albumgrom'
-
-AWS.config.update({ region: REGION })
-AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-  IdentityPoolId: IDENTITY_POOL_ID,
-})
-const s3 = new AWS.S3({
-  apiVersion: '2006-03-01',
-  params: { Bucket: BUCKET },
 })
 
 const IK_URL_ENDPOINT = process.env.REACT_APP_IMAGEKIT_URL_ENDPOINT || ''
@@ -91,15 +78,9 @@ const MainApp = () => {
 
   const createNewSession = async () => {
     if (sessionId) {
-      const { Contents } = await s3
-        .listObjectsV2({ Prefix: `${sessionId}/` })
-        .promise()
-      if (Contents && Contents.length) {
-        await s3
-          .deleteObjects({
-            Delete: { Objects: Contents.map((o) => ({ Key: o.Key! })) },
-          })
-          .promise()
+      const { contents } = await listObjects(`${sessionId}/`)
+      if (contents && contents.length) {
+        await deleteObjects(contents.map((o) => o.Key || ''))
       }
     }
     const sid = Date.now().toString()
@@ -113,10 +94,8 @@ const MainApp = () => {
   }
 
   const continueSession = async () => {
-    const { Contents } = await s3
-      .listObjectsV2({ Prefix: `${sessionId}/` })
-      .promise()
-    const urls = (Contents || []).map((o) => getResizedUrl(o.Key!, 1000))
+    const { contents } = await listObjects(`${sessionId}/`)
+    const urls = (contents || []).map((o) => getResizedUrl(o.Key!, 1000))
     setLoadedImages(urls)
     const storedSize = localStorage.getItem('albumSize')
     if (storedSize) {
@@ -143,10 +122,9 @@ const MainApp = () => {
       setSessionId(sid)
       const storedSize = localStorage.getItem('albumSize')
       if (storedSize) setAlbumSize(JSON.parse(storedSize))
-      s3.listObjectsV2({ Prefix: `${sid}/` })
-        .promise()
-        .then(({ Contents }) => {
-          if (Contents && Contents.length) setShowPrompt(true)
+      listObjects(`${sid}/`)
+        .then(({ contents }) => {
+          if (contents && contents.length) setShowPrompt(true)
         })
         .catch(console.error)
     } else {
@@ -223,7 +201,6 @@ const MainApp = () => {
                 setLoadedImages((prev) => [...prev, ...urls])
               }
               albumSize={albumSize}
-              s3={s3}
               sessionId={sessionId as string}
             />
           ) : null}
